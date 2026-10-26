@@ -64,6 +64,33 @@ button:focus-visible{outline:2px solid #fff;outline-offset:3px}
   z-index: 1;
   text-align: center;
   width: 100%;
+  display: flex;            
+  flex-direction: column;  
+  align-items: center;
+}
+.restart-btn {
+  margin-top: 32px;
+  padding: 12px 30px;
+  font-size: 1rem;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: #fff;
+  background-color: #e50914;
+  border: 1px solid #ff3b2f;
+  border-radius: 4px;
+  cursor: pointer;
+  
+  /* ★最初は消しておく */
+  opacity: 0;
+  transform: translateY(15px); /* 少し下に下げておく */
+  
+  /* ★演出の待ち時間設定（2.2s = 2.2秒遅れて出現させる） */
+  transition: opacity 1s ease 2.2s, transform 1s ease 2.2s;
+}
+
+.door-overlay.open .restart-btn {
+  opacity: 1;
+  transform: translateY(0); /* 元の位置に浮かび上がる */
 }
 
 .welcome-text {
@@ -108,6 +135,7 @@ button:focus-visible{outline:2px solid #fff;outline-offset:3px}
 <div id="clearDoorOverlay" class="door-overlay">
   <div class="behind-door">
     <h1 class="welcome-text">ようこそ別班へ</h1>
+    <button id="restartBtn" class="restart-btn">またゲームを始める</button>
   </div>
   <div class="door door-left"></div>
   <div class="door door-right"></div>
@@ -274,15 +302,28 @@ button:focus-visible{outline:2px solid #fff;outline-offset:3px}
     ov.classList.remove("off");win?sfx.win():sfx.lose();
   }
 
-  $("go").addEventListener("click",function(){
-    audio();
-    var overlay = $("clearDoorOverlay");
-    if(overlay){
-      overlay.classList.remove("open");
-      overlay.classList.remove("active");
-    }
-    ov.classList.add("off");stage=0;lives=3;runStage();
-  });
+  // 1. 中身の処理をひとまとめにした関数を作成
+function restartGame() {
+  audio();
+  var overlay = $("clearDoorOverlay");
+  if(overlay){
+    overlay.classList.remove("open");
+    overlay.classList.remove("active");
+  }
+  ov.classList.add("off");
+  stage = 0;
+  lives = 3;
+  runStage();
+}
+
+// 2. go ボタンは元の長々とした中身を消して、関数名を渡すだけにする
+$("go").addEventListener("click", restartGame);
+
+// 3. 追加した「またゲームを始める」ボタンも同じ関数を指定する
+var restartBtn = $("restartBtn");
+if(restartBtn) {
+  restartBtn.addEventListener("click", restartGame);
+}
 
   $("snd").addEventListener("click",function(){muted=!muted;this.textContent=muted?"音 OFF":"音 ON";if(!muted)audio()});
   build(4);hearts();
