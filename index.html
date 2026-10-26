@@ -43,7 +43,7 @@ button:focus-visible{outline:2px solid #fff;outline-offset:3px}
   height: 100vh;
   background-color: #000;
   display: none;
-  pointer-events: none; /* ゲーム中はクリックを妨害しない */
+  pointer-events: none; /* 通常時は操作を一切邪魔しない */
   justify-content: center;
   align-items: center;
   z-index: 9999;
@@ -51,14 +51,14 @@ button:focus-visible{outline:2px solid #fff;outline-offset:3px}
   transition: opacity 0.6s ease;
 }
 
-/* クリア時にアクティブ化 */
+/* クリア時に表示 */
 .door-overlay.active {
   display: flex;
   pointer-events: auto;
   opacity: 1;
 }
 
-/* 扉の奥の「ようこそ別班へ」文字 */
+/* 扉の奥のメッセージ */
 .behind-door {
   position: absolute;
   z-index: 1;
@@ -77,13 +77,12 @@ button:focus-visible{outline:2px solid #fff;outline-offset:3px}
   transition: opacity 1.2s ease 1s, transform 1.2s ease 1s;
 }
 
-/* 扉が開いた時の文字拡大表示 */
 .door-overlay.open .welcome-text {
   opacity: 1;
   transform: scale(1);
 }
 
-/* 左右の重厚な扉 */
+/* 観音開きの扉 */
 .door {
   position: absolute;
   top: 0;
@@ -96,24 +95,11 @@ button:focus-visible{outline:2px solid #fff;outline-offset:3px}
   transition: transform 1.8s cubic-bezier(0.77, 0, 0.175, 1);
 }
 
-.door-left {
-  left: 0;
-  border-right: 3px solid #444;
-}
+.door-left { left: 0; border-right: 3px solid #444; }
+.door-right { right: 0; border-left: 3px solid #444; }
 
-.door-right {
-  right: 0;
-  border-left: 3px solid #444;
-}
-
-/* 観音開きの動作 */
-.door-overlay.open .door-left {
-  transform: translateX(-100%);
-}
-
-.door-overlay.open .door-right {
-  transform: translateX(100%);
-}
+.door-overlay.open .door-left { transform: translateX(-100%); }
+.door-overlay.open .door-right { transform: translateX(100%); }
 </style>
 </head>
 <body>
@@ -163,7 +149,6 @@ button:focus-visible{outline:2px solid #fff;outline-offset:3px}
 
   function say(t){msg.textContent=t}
   function hearts(){var s="";for(var i=0;i<3;i++)s+=i<lives?"●":"○";$("life").textContent=s}
-  function wait(ms,tk){return new Promise(function(r){setTimeout(function(){r(tk===token)},ms)})}
 
   // 全クリア時に扉を開く演出
   function triggerClearDoor() {
@@ -191,21 +176,33 @@ button:focus-visible{outline:2px solid #fff;outline-offset:3px}
   function flash(i,ms,cls){var p=pads[i];p.classList.add(cls||"lit");setTimeout(function(){p.classList.remove(cls||"lit")},ms)}
   function enable(on){pads.forEach(function(p){p.disabled=!on})}
 
-  async function runStage(){
+  function runStage(){
     var tk=++token,c=CFG[stage];
     cancelAnimationFrame(raf);fill.style.transform="scaleX(1)";
     $("st").textContent="ステージ "+(stage+1)+"/"+CFG.length;hearts();
     build(c.n);enable(false);phase="show";
     seq=[];for(var i=0;i<c.len;i++){seq.push(Math.floor(Math.random()*c.n))}
     say("お手本をよく見て…");
-    if(!await wait(900,tk))return;
-    for(var k=0;k<seq.length;k++){
-      flash(seq[k],c.show-80);tone(FREQ[seq[k]],c.show/1000,"sine",.22);
-      if(!await wait(c.show+220,tk))return;
+    setTimeout(function(){
+      if(tk!==token)return;
+      showSequence(0, tk, c);
+    }, 900);
+  }
+
+  function showSequence(idx, tk, c){
+    if(tk!==token)return;
+    if(idx<seq.length){
+      flash(seq[idx],c.show-80);
+      tone(FREQ[seq[idx]],c.show/1000,"sine",.22);
+      setTimeout(function(){
+        if(tk!==token)return;
+        showSequence(idx+1, tk, c);
+      }, c.show+220);
+    }else{
+      phase="input";pos=0;enable(true);say("同じ順にタッチ！");
+      limit=(c.len*1.4+2.5-stage*.2)*1000;t0=performance.now();lastTick=-1;
+      loop(tk);
     }
-    phase="input";pos=0;enable(true);say("同じ順にタッチ！");
-    limit=(c.len*1.4+2.5-stage*.2)*1000;t0=performance.now();lastTick=-1;
-    loop(tk);
   }
 
   var lastTick=-1;
@@ -228,32 +225,45 @@ button:focus-visible{outline:2px solid #fff;outline-offset:3px}
     }else{flash(i,300,"ng");fail("Fail 失敗")}
   }
 
-  async function success(){
+  function success(){
+    if(phase!=="input")return;
     phase = "done";
     enable(false);
     cancelAnimationFrame(raf);
-    var tk = token;
-    await wait(250, tk);
     sfx.ok();
     say("成功！");
     stage++;
 
-    // 全ステージクリア判定
+    // 全ステージクリア時
     if (stage >= CFG.length) {
       sfx.win();
-      await wait(900, tk);
-      triggerClearDoor(); // 全クリア時に扉演出を自動実行
+      setTimeout(triggerClearDoor, 800);
       return;
     }
 
-    if (await wait(1200, tk)) runStage();
+    // 1秒後に確実に次のステージを開始
+    setTimeout(function(){
+      runStage();
+    }, 1000);
   }
 
-  async function fail(t){
-    phase="done";enable(false);cancelAnimationFrame(raf);var tk=token;
-    sfx.ng();lives--;hearts();say(t);
-    if(lives<=0){await wait(900,tk);return end(false)}
-    if(await wait(1400,tk)){say("もう一度。新しい暗号だ。");if(await wait(700,tk))runStage()}
+  function fail(t){
+    if(phase!=="input"&&phase!=="show")return;
+    phase="done";
+    enable(false);
+    cancelAnimationFrame(raf);
+    sfx.ng();
+    lives--;
+    hearts();
+    say(t);
+    if(lives<=0){
+      setTimeout(function(){ end(false); }, 900);
+      return;
+    }
+    setTimeout(function(){
+      say("もう一度。新しい暗号だ。");
+      setTimeout(function(){ runStage(); }, 700);
+    }, 1400);
   }
 
   function end(win){
