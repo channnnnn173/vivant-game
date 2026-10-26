@@ -33,86 +33,7 @@ button:focus-visible{outline:2px solid #fff;outline-offset:3px}
 .main{padding:12px 30px;font-size:16px;border:1px solid var(--red);background:transparent;color:var(--ink);border-radius:4px;cursor:pointer}
 #snd{background:none;border:0;color:var(--dim);font-size:13px;cursor:pointer;padding:4px 0}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
-/* 全体コンテナ */
-.door-container {
-  position: relative;
-  width: 100%;
-  height: 300px; /* 必要に応じて高さ調整 */
-  background-color: #0d0d0d;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: hidden;
-  border: 2px solid #333;
-}
 
-/* 扉の奥の文字デザイン */
-.behind-door {
-  position: absolute;
-  z-index: 1;
-  text-align: center;
-}
-
-.welcome-text {
-  color: #e50914; /* 雰囲気のある赤色（金色なら #d4af37 など） */
-  font-size: 2rem;
-  font-weight: bold;
-  letter-spacing: 6px;
-  opacity: 0;
-  transform: scale(0.8);
-  /* 扉が開く（1.5秒）のを待ってから1秒かけてフェードイン表示 */
-  transition: opacity 1s ease 1.2s, transform 1s ease 1.2s;
-}
-
-/* 扉が開いた時の文字表示効果 */
-.door-container.open .welcome-text {
-  opacity: 1;
-  transform: scale(1);
-}
-
-/* 左右の扉のデザイン */
-.door {
-  position: absolute;
-  top: 0;
-  width: 50%;
-  height: 100%;
-  background: linear-gradient(135deg, #2c2c2c, #1a1a1a);
-  border: 1px solid #444;
-  z-index: 2;
-  /* スムーズに開くアニメーション設定 */
-  transition: transform 1.5s cubic-bezier(0.77, 0, 0.175, 1);
-}
-
-.door-left {
-  left: 0;
-}
-
-.door-right {
-  right: 0;
-}
-
-/* 扉が開く時の動作（左右にスライド） */
-.door-container.open .door-left {
-  transform: translateX(-100%);
-}
-
-.door-container.open .door-right {
-  transform: translateX(100%);
-}
-
-/* テスト用ボタン */
-.open-btn {
-  margin-top: 15px;
-  padding: 10px 20px;
-  background-color: #333;
-  color: #fff;
-  border: none;
-  cursor: pointer;
-  border-radius: 4px;
-}
-.open-btn:hover {
-  background-color: #555;
-}
 /* 全クリア演出の全体カバー */
 .door-overlay {
   position: fixed;
@@ -121,7 +42,8 @@ button:focus-visible{outline:2px solid #fff;outline-offset:3px}
   width: 100vw;
   height: 100vh;
   background-color: #000;
-  display: none; /* 最初は隠しておく */
+  display: none;
+  pointer-events: none; /* ゲーム中はクリックを妨害しない */
   justify-content: center;
   align-items: center;
   z-index: 9999;
@@ -129,13 +51,14 @@ button:focus-visible{outline:2px solid #fff;outline-offset:3px}
   transition: opacity 0.6s ease;
 }
 
-/* クリア時に表示 */
+/* クリア時にアクティブ化 */
 .door-overlay.active {
   display: flex;
+  pointer-events: auto;
   opacity: 1;
 }
 
-/* 扉の奥の文字 */
+/* 扉の奥の「ようこそ別班へ」文字 */
 .behind-door {
   position: absolute;
   z-index: 1;
@@ -154,13 +77,13 @@ button:focus-visible{outline:2px solid #fff;outline-offset:3px}
   transition: opacity 1.2s ease 1s, transform 1.2s ease 1s;
 }
 
-/* 扉が開いたときの文字アニメーション */
+/* 扉が開いた時の文字拡大表示 */
 .door-overlay.open .welcome-text {
   opacity: 1;
   transform: scale(1);
 }
 
-/* 左右の扉 */
+/* 左右の重厚な扉 */
 .door {
   position: absolute;
   top: 0;
@@ -183,7 +106,7 @@ button:focus-visible{outline:2px solid #fff;outline-offset:3px}
   border-left: 3px solid #444;
 }
 
-/* 扉が開く動作（左右へスライド） */
+/* 観音開きの動作 */
 .door-overlay.open .door-left {
   transform: translateX(-100%);
 }
@@ -194,7 +117,8 @@ button:focus-visible{outline:2px solid #fff;outline-offset:3px}
 </style>
 </head>
 <body>
-  <!-- 全クリア時の扉演出オーバーレイ -->
+
+<!-- 全クリア時の扉演出オーバーレイ -->
 <div id="clearDoorOverlay" class="door-overlay">
   <div class="behind-door">
     <h1 class="welcome-text">ようこそ別班へ</h1>
@@ -202,29 +126,18 @@ button:focus-visible{outline:2px solid #fff;outline-offset:3px}
   <div class="door door-left"></div>
   <div class="door door-right"></div>
 </div>
+
 <div id="app">
   <header><b id="st">ステージ 1/6</b><span id="life" aria-label="ライフ">●●●</span><button id="snd">音 ON</button></header>
-  <div id="msg">
-    p;</div>
+  <div id="msg"></div>
   <div id="bar"><div id="fill"></div></div>
   <div id="scene">
     <div id="grid"></div>
     <div id="ov"><h1 id="ot">暗号パネル</h1><p id="op">壁のボタンが光る順番を覚えて、同じ順にタッチ。<br>制限時間内に6ステージを突破しよう。</p><button class="main" id="go">スタート</button></div>
   </div>
-  <!-- 扉とメッセージのコンテナ -->
-<div class="door-container" id="doorContainer">
-  <!-- 扉の奥にあるメッセージ（初期状態は隠れている） -->
-  <div class="behind-door">
-    <h1 class="welcome-text">ようこそ別班へ</h1>
-  </div>
+</div>
 
-  <!-- 左右の扉 -->
-  <div class="door door-left"></div>
-  <div class="door door-right"></div>
-</div>
-</div>
 <script>
-let tk;
 (function(){
   var CFG=[{n:4,len:3,show:700},{n:4,len:4,show:620},{n:6,len:4,show:560},{n:6,len:5,show:500},{n:9,len:5,show:450},{n:9,len:6,show:400}];
   var FREQ=[262,294,330,392,440,523,587,659,784];
@@ -251,6 +164,16 @@ let tk;
   function say(t){msg.textContent=t}
   function hearts(){var s="";for(var i=0;i<3;i++)s+=i<lives?"●":"○";$("life").textContent=s}
   function wait(ms,tk){return new Promise(function(r){setTimeout(function(){r(tk===token)},ms)})}
+
+  // 全クリア時に扉を開く演出
+  function triggerClearDoor() {
+    var overlay = $("clearDoorOverlay");
+    if (!overlay) return;
+    overlay.classList.add("active");
+    setTimeout(function() {
+      overlay.classList.add("open");
+    }, 500);
+  }
 
   function build(n){
     grid.innerHTML="";pads=[];
@@ -284,6 +207,7 @@ let tk;
     limit=(c.len*1.4+2.5-stage*.2)*1000;t0=performance.now();lastTick=-1;
     loop(tk);
   }
+
   var lastTick=-1;
   function loop(tk){
     if(tk!==token||phase!=="input")return;
@@ -294,6 +218,7 @@ let tk;
     if(left<=0){fail("時間切れ！");return}
     raf=requestAnimationFrame(function(){loop(tk)});
   }
+
   function press(i){
     if(phase!=="input")return;
     audio();
@@ -302,51 +227,35 @@ let tk;
       if(pos===seq.length)success();
     }else{flash(i,300,"ng");fail("Fail 失敗")}
   }
+
   async function success(){
     phase = "done";
     enable(false);
-    
-    // tk が定義されている場合のみ cancel 実行
-    if (typeof tk !== "undefined" && typeof cancelAnimationFrame !== "undefined") {
-        cancelAnimationFrame(tk);
-    }
-    
-    // wait 関数呼出（tkが存在しない場合は null を渡す）
-    const currentTk = typeof tk !== "undefined" ? tk : null;
-    await wait(250, currentTk);
-    
+    cancelAnimationFrame(raf);
+    var tk = token;
+    await wait(250, tk);
     sfx.ok();
     say("成功！");
     stage++;
-    
+
     // 全ステージクリア判定
     if (stage >= CFG.length) {
-        await wait(900, currentTk);
-        triggerClearDoor(); // 扉のアニメーション実行
-        return;
+      sfx.win();
+      await wait(900, tk);
+      triggerClearDoor(); // 全クリア時に扉演出を自動実行
+      return;
     }
-    
-    if (await wait(1200, currentTk)) runStage();
-}
 
-// ★ 自動で扉を表示して開く関数
-async function triggerClearDoor() {
-    const overlay = document.getElementById('clearDoorOverlay');
-    if (!overlay) return;
-    
-    // 1. 扉画面を全画面表示
-    overlay.classList.add('active');
-    
-    // 2. 0.8秒後に扉が左右に観音開きする
-    await wait(800, tk);
-    overlay.classList.add('open');
-}
+    if (await wait(1200, tk)) runStage();
+  }
+
   async function fail(t){
     phase="done";enable(false);cancelAnimationFrame(raf);var tk=token;
     sfx.ng();lives--;hearts();say(t);
     if(lives<=0){await wait(900,tk);return end(false)}
     if(await wait(1400,tk)){say("もう一度。新しい暗号だ。");if(await wait(700,tk))runStage()}
   }
+
   function end(win){
     phase="end";
     $("ot").textContent=win?"CLEAR":"GAME OVER";
@@ -354,34 +263,21 @@ async function triggerClearDoor() {
     $("go").textContent=win?"もう一度":"リトライ";
     ov.classList.remove("off");win?sfx.win():sfx.lose();
   }
+
   $("go").addEventListener("click",function(){
-    audio();ov.classList.add("off");stage=0;lives=3;runStage();
+    audio();
+    var overlay = $("clearDoorOverlay");
+    if(overlay){
+      overlay.classList.remove("open");
+      overlay.classList.remove("active");
+    }
+    ov.classList.add("off");stage=0;lives=3;runStage();
   });
+
   $("snd").addEventListener("click",function(){muted=!muted;this.textContent=muted?"音 OFF":"音 ON";if(!muted)audio()});
   build(4);hearts();
   window.addEventListener("resize",function(){if(!ov.classList.contains("off"))build(4)});
 })();
-// 全ステージクリア時に自動で扉を開く処理
-function triggerClearDoor() {
-  const overlay = document.getElementById('clearDoorOverlay');
-  if (!overlay) return;
-
-  // 1. 扉画面を表示
-  overlay.classList.add('active');
-
-  // 2. 0.5秒後に自動で扉を観音開きにする
-  setTimeout(() => {
-    overlay.classList.add('open');
-  }, 500);
-}
 </script>
-<!-- 全クリア時の扉演出画面 -->
-<div id="clearDoorOverlay" class="door-overlay">
-  <div class="behind-door">
-    <h1 class="welcome-text">ようこそ別班へ</h1>
-  </div>
-  <div class="door door-left"></div>
-  <div class="door door-right"></div>
-</div>
 </body>
 </html>
