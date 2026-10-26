@@ -33,17 +33,112 @@ button:focus-visible{outline:2px solid #fff;outline-offset:3px}
 .main{padding:12px 30px;font-size:16px;border:1px solid var(--red);background:transparent;color:var(--ink);border-radius:4px;cursor:pointer}
 #snd{background:none;border:0;color:var(--dim);font-size:13px;cursor:pointer;padding:4px 0}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+/* 全体コンテナ */
+.door-container {
+  position: relative;
+  width: 100%;
+  height: 300px; /* 必要に応じて高さ調整 */
+  background-color: #0d0d0d;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  border: 2px solid #333;
+}
+
+/* 扉の奥の文字デザイン */
+.behind-door {
+  position: absolute;
+  z-index: 1;
+  text-align: center;
+}
+
+.welcome-text {
+  color: #e50914; /* 雰囲気のある赤色（金色なら #d4af37 など） */
+  font-size: 2rem;
+  font-weight: bold;
+  letter-spacing: 6px;
+  opacity: 0;
+  transform: scale(0.8);
+  /* 扉が開く（1.5秒）のを待ってから1秒かけてフェードイン表示 */
+  transition: opacity 1s ease 1.2s, transform 1s ease 1.2s;
+}
+
+/* 扉が開いた時の文字表示効果 */
+.door-container.open .welcome-text {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* 左右の扉のデザイン */
+.door {
+  position: absolute;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(135deg, #2c2c2c, #1a1a1a);
+  border: 1px solid #444;
+  z-index: 2;
+  /* スムーズに開くアニメーション設定 */
+  transition: transform 1.5s cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+.door-left {
+  left: 0;
+}
+
+.door-right {
+  right: 0;
+}
+
+/* 扉が開く時の動作（左右にスライド） */
+.door-container.open .door-left {
+  transform: translateX(-100%);
+}
+
+.door-container.open .door-right {
+  transform: translateX(100%);
+}
+
+/* テスト用ボタン */
+.open-btn {
+  margin-top: 15px;
+  padding: 10px 20px;
+  background-color: #333;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.open-btn:hover {
+  background-color: #555;
+}
 </style>
 </head>
 <body>
 <div id="app">
   <header><b id="st">ステージ 1/6</b><span id="life" aria-label="ライフ">●●●</span><button id="snd">音 ON</button></header>
-  <div id="msg">&nbsp;</div>
+  <div id="msg">&nbs
+    p;</div>
   <div id="bar"><div id="fill"></div></div>
   <div id="scene">
     <div id="grid"></div>
     <div id="ov"><h1 id="ot">暗号パネル</h1><p id="op">壁のボタンが光る順番を覚えて、同じ順にタッチ。<br>制限時間内に6ステージを突破しよう。</p><button class="main" id="go">スタート</button></div>
   </div>
+  <!-- 扉とメッセージのコンテナ -->
+<div class="door-container" id="doorContainer">
+  <!-- 扉の奥にあるメッセージ（初期状態は隠れている） -->
+  <div class="behind-door">
+    <h1 class="welcome-text">ようこそ別班へ</h1>
+  </div>
+
+  <!-- 左右の扉 -->
+  <div class="door door-left"></div>
+  <div class="door door-right"></div>
+</div>
+
+<!-- アニメーションを動かすテスト用ボタン（演出テスト用） -->
+<button class="open-btn" onclick="openDoor()">扉を開く</button>
 </div>
 <script>
 (function(){
@@ -125,7 +220,7 @@ button:focus-visible{outline:2px solid #fff;outline-offset:3px}
   }
   async function success(){
     phase="done";enable(false);cancelAnimationFrame(raf);var tk=token;
-    await wait(250,tk);sfx.ok();say("成功！");
+    await wait(250,tk);sfx.ok();openDoor();say("成功！");
     stage++;
     if(stage>=CFG.length){await wait(900,tk);return end(true)}
     if(await wait(1200,tk))runStage();
@@ -150,6 +245,11 @@ button:focus-visible{outline:2px solid #fff;outline-offset:3px}
   build(4);hearts();
   window.addEventListener("resize",function(){if(!ov.classList.contains("off"))build(4)});
 })();
+// 扉を開く処理
+function openDoor() {
+  const doorContainer = document.getElementById('doorContainer');
+  doorContainer.classList.add('open');
+}
 </script>
 </body>
 </html>
