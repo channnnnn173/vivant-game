@@ -224,6 +224,7 @@ button:focus-visible{outline:2px solid #fff;outline-offset:3px}
 </div>
 </div>
 <script>
+let tk;
 (function(){
   var CFG=[{n:4,len:3,show:700},{n:4,len:4,show:620},{n:6,len:4,show:560},{n:6,len:5,show:500},{n:9,len:5,show:450},{n:9,len:6,show:400}];
   var FREQ=[262,294,330,392,440,523,587,659,784];
@@ -304,22 +305,28 @@ button:focus-visible{outline:2px solid #fff;outline-offset:3px}
   async function success(){
     phase = "done";
     enable(false);
-    if(typeof cancelAnimationFrame !== "undefined") cancelAnimationFrame(tk);
-    await wait(250, tk);
+    
+    // tk が定義されている場合のみ cancel 実行
+    if (typeof tk !== "undefined" && typeof cancelAnimationFrame !== "undefined") {
+        cancelAnimationFrame(tk);
+    }
+    
+    // wait 関数呼出（tkが存在しない場合は null を渡す）
+    const currentTk = typeof tk !== "undefined" ? tk : null;
+    await wait(250, currentTk);
+    
     sfx.ok();
     say("成功！");
     stage++;
     
-    // 全ステージクリア時の判定
-    if(stage >= CFG.length){
-        await wait(900, tk);
-        
-        // ★ 扉アニメーションを実行！
-        triggerClearDoor();
+    // 全ステージクリア判定
+    if (stage >= CFG.length) {
+        await wait(900, currentTk);
+        triggerClearDoor(); // 扉のアニメーション実行
         return;
     }
     
-    if(await wait(1200, tk)) runStage();
+    if (await wait(1200, currentTk)) runStage();
 }
 
 // ★ 自動で扉を表示して開く関数
