@@ -227,12 +227,38 @@ button:focus-visible{outline:2px solid #fff;outline-offset:3px}
     }else{flash(i,300,"ng");fail("Fail 失敗")}
   }
   async function success(){
-    phase="done";enable(false);cancelAnimationFrame(raf);var tk=token;
-    await wait(250,tk);sfx.ok();openDoor();say("成功！");
+    phase = "done";
+    enable(false);
+    if(typeof cancelAnimationFrame !== "undefined") cancelAnimationFrame(tk);
+    await wait(250, tk);
+    sfx.ok();
+    say("成功！");
     stage++;
-    if(stage>=CFG.length){await wait(900,tk);return end(true)}
-    if(await wait(1200,tk))runStage();
-  }
+    
+    // ★ 全ステージクリア時
+    if(stage >= CFG.length){
+        await wait(900, tk);
+        
+        // 扉を開くアニメーションを自動実行！
+        triggerClearDoor();
+        return;
+    }
+    
+    if(await wait(1200, tk)) runStage();
+}
+
+// ★ 自動で扉を表示して開く関数
+async function triggerClearDoor() {
+    const overlay = document.getElementById('clearDoorOverlay');
+    if (!overlay) return;
+    
+    // 1. 扉画面を全画面表示
+    overlay.classList.add('active');
+    
+    // 2. 0.8秒後に扉が左右に観音開きする
+    await wait(800, tk);
+    overlay.classList.add('open');
+}
   async function fail(t){
     phase="done";enable(false);cancelAnimationFrame(raf);var tk=token;
     sfx.ng();lives--;hearts();say(t);
