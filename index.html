@@ -116,9 +116,17 @@ button:focus-visible{outline:2px solid #fff;outline-offset:3px}
 </style>
 </head>
 <body>
+  <!-- 全クリア時の扉演出オーバーレイ -->
+<div id="clearDoorOverlay" class="door-overlay">
+  <div class="behind-door">
+    <h1 class="welcome-text">ようこそ別班へ</h1>
+  </div>
+  <div class="door door-left"></div>
+  <div class="door door-right"></div>
+</div>
 <div id="app">
   <header><b id="st">ステージ 1/6</b><span id="life" aria-label="ライフ">●●●</span><button id="snd">音 ON</button></header>
-  <div id="msg">&nbs
+  <div id="msg">
     p;</div>
   <div id="bar"><div id="fill"></div></div>
   <div id="scene">
@@ -229,7 +237,7 @@ button:focus-visible{outline:2px solid #fff;outline-offset:3px}
     phase="done";enable(false);cancelAnimationFrame(raf);var tk=token;
     sfx.ng();lives--;hearts();say(t);
     if(lives<=0){await wait(900,tk);return end(false)}
-    if(await wait(1400,tk)){say("もう一度。新しいお手本だ。");if(await wait(700,tk))runStage()}
+    if(await wait(1400,tk)){say("もう一度。新しい暗号だ。");if(await wait(700,tk))runStage()}
   }
   function end(win){
     phase="end";
